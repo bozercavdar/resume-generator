@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ resume.name }} - Resume</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm 10mm;
+        }
+        @font-face {
+            font-family: "Liberation Sans";
+            src: url("file:///usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+        }
+        @font-face {
+            font-family: "Liberation Sans";
+            font-weight: bold;
+            src: url("file:///usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf");
+        }
+
+        body {
+            font-family: "Liberation Sans", Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.35;
+            margin: 0;
+        }
+
+        /* Name & contact */
+        .name {
+            font-size: 16pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .contact {
+            text-align: center;
+            font-size: 9pt;
+            margin-bottom: 12px;
+        }
+
+        .contact a {
+            color: #003366;
+            text-decoration: none;
+        }
+
+        /* Section titles */
+        .section-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            font-size: 10pt;
+        }
+
+        /* Header rows (job / education) */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .job-title,
+        .edu-title {
+            font-weight: bold;
+        }
+
+        .job-meta,
+        .edu-meta {
+            font-style: italic;
+            font-size: 9pt;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* Work experience bullets */
+        ul {
+            margin-top: 4px;
+            margin-bottom: 8px;
+            padding-left: 18px;
+        }
+
+        li {
+            margin-bottom: 3px;
+        }
+
+        /* Education spacing tweaks */
+        .education .header-row {
+            margin-bottom: 2px;
+        }
+
+        .education p {
+            margin-top: 2px;
+            margin-bottom: 4px;
+        }
+
+        /* Skills */
+        p {
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+
+        /* Links everywhere else */
+        a {
+            color: #003366;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="name">{{ resume.name }}</div>
+<div class="contact">
+    {{ resume.location }} • {{ resume.phone }} • {{ resume.email }}
+    {% for link in resume.links %}
+        • <a href="{{ link.url }}">{{ link.label }}</a>
+    {% endfor %}
+</div>
+
+{% if resume.summary %}
+<div class="section-title">Professional Summary</div>
+<p>{{ resume.summary }}</p>
+{% endif %}
+
+<div class="section-title">Work Experience</div>
+{% for job in resume.experience %}
+    <div class="header-row">
+        <div class="job-title">
+            {{ job.title }} – {{ job.company }}
+        </div>
+        <div class="job-meta">
+            {{ job.start }} – {{ job.end }} | {{ job.location }}
+        </div>
+    </div>
+    <ul>
+        {% for bullet in job.bullets %}
+            <li>{{ bullet }}</li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+
+<div class="section-title">Education</div>
+{% for edu in resume.education %}
+    <div class="header-row">
+        <div class="edu-title">
+            {{ edu.degree }}, {{ edu.school }}
+        </div>
+        <div class="edu-meta">
+            {{ edu.start }} – {{ edu.end }} | {{ edu.location }}
+        </div>
+    </div>
+    {% if edu.details %}
+        <p>{{ edu.details }}</p>
+    {% endif %}
+{% endfor %}
+<div class="section-title">Volunteering & Leadership</div>
+
+{% if resume.volunteering and resume.volunteering | length > 0 %}
+{% for vol in resume.volunteering %}
+    <div class="header-row">
+        <div class="job-title">
+            {{ vol.role }} – {{ vol.organization }}
+        </div>
+        <div class="job-meta">
+            {{ vol.start }} – {{ vol.end }}{% if vol.location %} | {{ vol.location }}{% endif %}
+        </div>
+    </div>
+    <ul>
+        {% for bullet in vol.bullets %}
+            <li>{{ bullet }}</li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+{% endif %}
+
+<div class="section-title">Skills</div>
+<p><strong>Technical:</strong> {{ resume.skills.technical | join(', ') }}</p>
+<p><strong>Languages:</strong> {{ resume.skills.languages | join(', ') }}</p>
+
+</body>
+</html>

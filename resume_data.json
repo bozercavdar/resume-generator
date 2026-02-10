@@ -1,0 +1,93 @@
+{
+  "name": "First Last",
+  "location": "City, Country",
+  "phone": "+00 000 000 0000",
+  "email": "email@example.com",
+  "links": [
+    {
+      "label": "LinkedIn",
+      "url": "https://linkedin.com/in/username"
+    },
+    {
+      "label": "GitHub",
+      "url": "https://github.com/username"
+    }
+  ],
+
+  "summary": "Optional. A short professional summary (2–4 sentences). Leave empty or null to hide this section.",
+
+  "experience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "location": "City, Country",
+      "start": "MM/YYYY",
+      "end": "MM/YYYY or Present",
+      "bullets": [
+        "Accomplishment or responsibility written in one concise sentence.",
+        "Start bullets with action verbs and focus on impact.",
+        "Optional: include technologies, methods, or results."
+      ]
+    },
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "location": "City, Country",
+      "start": "MM/YYYY",
+      "end": "MM/YYYY or Present",
+      "bullets": [
+        "Accomplishment or responsibility written in one concise sentence.",
+        "Start bullets with action verbs and focus on impact.",
+        "Optional: include technologies, methods, or results."
+      ]
+    }
+  ],
+
+  "education": [
+    {
+      "degree": "Degree Name",
+      "school": "University / Institution Name",
+      "location": "City, Country",
+      "start": "MM/YYYY (optional)",
+      "end": "MM/YYYY",
+      "details": "Optional. GPA, honors, specialization, awards, or coursework."
+    }
+  ],
+
+  "volunteering": [
+    {
+      "role": "Role or Position",
+      "organization": "Organization Name",
+      "location": "City, Country",
+      "start": "MM/YYYY",
+      "end": "MM/YYYY",
+      "bullets": [
+        "Optional. Leadership, volunteering, or extracurricular impact.",
+        "Leave the entire volunteering array empty ([]) to hide the section."
+      ]
+    }
+  ],
+
+  "skills": {
+    "data_science_ml": [
+      "Skill A",
+      "Skill B"
+    ],
+    "programming_languages": [
+      "Language A",
+      "Language B"
+    ],
+    "web_development": [
+      "Framework / Tool A",
+      "Framework / Tool B"
+    ],
+    "databases": [
+      "Database A"
+    ]
+  },
+
+  "languages": [
+    "Language – Proficiency Level",
+    "Another Language – Proficiency Level"
+  ]
+}

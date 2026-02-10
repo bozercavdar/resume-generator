@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "required": ["name", "experience", "education", "skills"],
+  "properties": {
+    "name": { "type": "string" },
+    "location": { "type": "string" },
+    "phone": { "type": "string" },
+    "email": { "type": "string" },
+
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "url"],
+        "properties": {
+          "label": { "type": "string" },
+          "url": { "type": "string" }
+        }
+      }
+    },
+
+    "summary": { "type": ["string", "null"] },
+
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "company", "start", "end", "bullets"],
+        "properties": {
+          "title": { "type": "string" },
+          "company": { "type": "string" },
+          "location": { "type": "string" },
+          "start": { "type": "string" },
+          "end": { "type": "string" },
+          "bullets": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["degree", "school", "end"],
+        "properties": {
+          "degree": { "type": "string" },
+          "school": { "type": "string" },
+          "location": { "type": "string" },
+          "start": { "type": "string" },
+          "end": { "type": "string" },
+          "details": { "type": "string" }
+        }
+      }
+    },
+
+    "volunteering": {
+      "type": "array"
+    },
+
+    "skills": {
+      "type": "object",
+      "required": ["technical", "languages"],
+      "properties": {
+        "technical": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "languages": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
