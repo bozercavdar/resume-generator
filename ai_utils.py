@@ -5,6 +5,9 @@ from jsonschema import validate
 import difflib
 from google import genai
 import re
+from docx import Document
+from docx.shared import Pt
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -85,3 +88,52 @@ Return the adjusted resume JSON only.
         failed_text_path = BASE_DIR / "failed_gemini_text.txt"
         save_txt(failed_text_path, text)
         raise ValueError(f"Gemini did not return valid JSON:\n{text}") from e
+
+def generate_cover_letter_text(
+    resume_data: dict,
+    job_description: str,
+    company: str | None = None,
+    role: str | None = None
+) -> str:
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+    instructions = f"""
+You are an expert career writer.
+
+TASK:
+Write a professional cover letter based ONLY on the resume data provided.
+
+RULES (STRICT):
+- Do NOT invent experience, tools, or achievements.
+- Use ONLY information from the resume.
+- Do NOT mention unrelated experience.
+- Keep the tone professional and concise.
+- Avoid clichés and buzzwords.
+- Length: 3–4 paragraphs total.
+
+STRUCTURE:
+1. Short introduction (interest in role and company)
+2. One paragraph connecting resume experience to job requirements
+3. Optional second experience paragraph if relevant
+4. Polite closing paragraph
+
+JOB DESCRIPTION:
+{job_description}
+
+RESUME DATA:
+{json.dumps(resume_data, indent=2, ensure_ascii=False)}
+
+{"Company: " + company if company else ""}
+{"Role: " + role if role else ""}
+
+Return ONLY the cover letter text.
+"""
+
+    response = client.models.generate_content(
+        model="models/gemini-2.5-flash",
+        contents=instructions,
+        config={"temperature": 0.3}
+    )
+
+    return response.text.strip()
+

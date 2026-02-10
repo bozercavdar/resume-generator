@@ -10,6 +10,7 @@ def main():
     resume_diff_output_path = BASE_DIR / "resume_diff.txt"
     template_name = "ats_resume.html"
     cv_output_path = BASE_DIR / "CV.pdf"
+    cover_letter_output_path = BASE_DIR / "Cover_Letter.docx"
 
     # Load existing resume data
     original_resume_data = load_resume_data(data_path)
@@ -31,6 +32,21 @@ def main():
     # Convert html content to pdf
     html_to_pdf(html_content, cv_output_path)
     print(f"Generated PDF at: {cv_output_path}")
+
+    # Generate cover letter
+    cover_letter_text = generate_cover_letter_text(
+        adjusted_resume,
+        job_description
+    )
+    # Save cover letter as word file
+    save_cover_letter_docx(
+        cover_letter_text,
+        cover_letter_output_path,
+        name=adjusted_resume["name"],
+        email=adjusted_resume.get("email")
+    )
+
+    print(f"Generated cover letter at: {cover_letter_output_path}")
 
 if __name__ == "__main__":
     main()
