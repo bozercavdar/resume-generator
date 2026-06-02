@@ -54,6 +54,7 @@ RULES (VERY IMPORTANT):
 - Preserve the exact JSON structure and keys.
 - Do NOT invent experience, tools, companies, or education.
 - Do NOT change dates, titles, or organizations.
+- Do NOT invent new fields that is different the given JSON.
 - You MAY rewrite and reorder bullet points.
 - You MAY emphasize skills relevant to the job description.
 - You MAY rewrite the summary according to the job description.
