@@ -355,6 +355,14 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
         </div>
       </div>
 
+      {/* JSON export reminder */}
+      <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-6">
+        <span className="text-blue-500 text-base leading-none mt-0.5">💡</span>
+        <p className="text-sm text-blue-700">
+          <strong>Don't forget to export your data.</strong> Use the <em>Export JSON</em> button below to save your resume as a file — you can import it next time to skip re-entering everything.
+        </p>
+      </div>
+
       {/* Footer actions */}
       <div className="flex items-center justify-between mt-6">
         <button
