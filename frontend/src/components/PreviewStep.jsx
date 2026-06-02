@@ -23,6 +23,17 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
 
   const [coverLetterText, setCoverLetterText] = useState('')
   const [showCoverLetter, setShowCoverLetter] = useState(false)
+  const coverLetterRef = useRef(null);
+
+  useEffect(() => {
+    if (showCoverLetter && coverLetterRef.current) {
+      coverLetterRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [showCoverLetter]);
+
   const [loadingPdf, setLoadingPdf] = useState(false)
   const [loadingCl, setLoadingCl] = useState(false)
   const [loadingClDownload, setLoadingClDownload] = useState(false)
@@ -201,7 +212,7 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
 
       {/* Cover letter panel */}
       {showCoverLetter && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
+        <div ref={coverLetterRef} className="bg-white rounded-xl border border-gray-200 shadow-sm mt-6 overflow-hidden">
           <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Cover Letter</span>
             <button
