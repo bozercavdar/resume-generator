@@ -1,10 +1,14 @@
+// In dev, VITE_API_URL is unset → relative path → Vite proxy forwards to localhost:8000
+// In production, set VITE_API_URL=https://your-backend.onrender.com in Vercel env vars
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 function geminiKeyHeader() {
   const key = sessionStorage.getItem('gemini_api_key')
   return key ? { 'X-Gemini-Key': key } : {}
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'Content-Type': 'application/json', ...geminiKeyHeader() },
     ...options,
   })
