@@ -1,5 +1,0 @@
-jinja2
-weasyprint
-jsonschema
-google-genai
-python-docx

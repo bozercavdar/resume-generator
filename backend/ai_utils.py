@@ -1,49 +1,23 @@
 import json
-import os
+import re
 from pathlib import Path
 from jsonschema import validate
-import difflib
 from google import genai
-import re
-from docx import Document
-from docx.shared import Pt
 
-
-BASE_DIR = Path(__file__).resolve().parent
 
 def validate_resume(data: dict, schema_path: Path):
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     validate(instance=data, schema=schema)
 
-def save_diff(original: dict, modified: dict, output_path: Path):
-    original_text = json.dumps(original, indent=2, ensure_ascii=False).splitlines()
-    modified_text = json.dumps(modified, indent=2, ensure_ascii=False).splitlines()
-
-    diff = difflib.unified_diff(
-        original_text,
-        modified_text,
-        fromfile="original",
-        tofile="adjusted",
-        lineterm=""
-    )
-
-    output_path.write_text("\n".join(diff), encoding="utf-8")
-
-def save_txt(output_path: Path, text: str):
-    output_path.write_text(text, encoding="utf-8")
-
-def save_json(data: dict, path: Path) -> None:
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
 
 def adjust_resume(
     resume_data: dict,
     job_description: str,
+    api_key: str,
     role: str | None = None,
-    strict: bool = False
+    strict: bool = False,
 ) -> dict:
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    client = genai.Client(api_key=api_key)
 
     instructions = f"""
 You are an expert resume editor and ATS optimization assistant.
@@ -71,32 +45,28 @@ Return the adjusted resume JSON only.
 """
 
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model="gemini-2.5-flash",
         contents=instructions,
-        config={
-            "temperature": 0.2
-        }
+        config={"temperature": 0.2},
     )
 
     text = response.text.strip()
-
-    # --- Gemini often wraps JSON in ``` ---
     text = re.sub(r"^```(?:json)?|```$", "", text).strip()
 
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        failed_text_path = BASE_DIR / "failed_gemini_text.txt"
-        save_txt(failed_text_path, text)
         raise ValueError(f"Gemini did not return valid JSON:\n{text}") from e
+
 
 def generate_cover_letter_text(
     resume_data: dict,
     job_description: str,
+    api_key: str,
     company: str | None = None,
-    role: str | None = None
+    role: str | None = None,
 ) -> str:
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    client = genai.Client(api_key=api_key)
 
     instructions = f"""
 You are an expert career writer.
@@ -131,10 +101,9 @@ Return ONLY the cover letter text.
 """
 
     response = client.models.generate_content(
-        model="models/gemini-2.5-flash",
+        model="gemini-2.5-flash",
         contents=instructions,
-        config={"temperature": 0.3}
+        config={"temperature": 0.3},
     )
 
     return response.text.strip()
-

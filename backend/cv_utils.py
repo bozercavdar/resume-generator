@@ -1,5 +1,5 @@
 from pathlib import Path
-import json
+from io import BytesIO
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 from docx import Document
@@ -7,11 +7,6 @@ from docx.shared import Pt
 
 
 BASE_DIR = Path(__file__).resolve().parent
-
-
-def load_resume_data(path: Path) -> dict:
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
 
 
 def render_html(resume_data: dict, template_name: str) -> str:
@@ -23,18 +18,17 @@ def render_html(resume_data: dict, template_name: str) -> str:
     return template.render(resume=resume_data)
 
 
-def html_to_pdf(html_content: str, output_path: Path) -> None:
-    HTML(string=html_content).write_pdf(str(output_path))
+def html_to_pdf(html_content: str) -> bytes:
+    return HTML(string=html_content).write_pdf()
 
-def save_cover_letter_docx(
+
+def generate_cover_letter_docx(
     text: str,
-    output_path: Path,
     name: str,
-    email: str | None = None
-):
+    email: str | None = None,
+) -> bytes:
     doc = Document()
 
-    # Name header
     header = doc.add_paragraph()
     run = header.add_run(name)
     run.bold = True
@@ -44,11 +38,13 @@ def save_cover_letter_docx(
         p = doc.add_paragraph()
         p.add_run(email).italic = True
 
-    doc.add_paragraph()  # spacer
+    doc.add_paragraph()
 
-    # Body paragraphs
     for paragraph in text.split("\n\n"):
         p = doc.add_paragraph()
         p.add_run(paragraph).font.size = Pt(11)
 
-    doc.save(output_path)
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
