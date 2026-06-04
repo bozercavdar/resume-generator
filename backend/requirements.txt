@@ -1,5 +1,7 @@
 fastapi
 uvicorn[standard]
+python-multipart
+pdfplumber
 jinja2
 weasyprint
 jsonschema

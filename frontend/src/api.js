@@ -41,6 +41,22 @@ export async function downloadPdf(resumeData) {
   URL.revokeObjectURL(url)
 }
 
+export async function importResumeFromPdf(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  // Do NOT set Content-Type — browser sets multipart/form-data with boundary automatically
+  const res = await fetch(`${API_BASE}/api/resume/parse-pdf`, {
+    method: 'POST',
+    headers: { ...geminiKeyHeader() },
+    body: formData,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(err.detail || 'Request failed')
+  }
+  return res.json()
+}
+
 export async function generateCoverLetter(resumeData, jobDescription, { company, role } = {}) {
   const res = await request('/api/cover-letter', {
     method: 'POST',

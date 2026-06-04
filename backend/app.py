@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from ai_utils import adjust_resume, generate_cover_letter_text, validate_resume
-from cv_utils import generate_cover_letter_docx, html_to_pdf, render_html
+from ai_utils import adjust_resume, generate_cover_letter_text, parse_resume_from_text, validate_resume
+from cv_utils import extract_text_from_pdf, generate_cover_letter_docx, html_to_pdf, render_html
 
 load_dotenv()
 
@@ -118,6 +118,35 @@ def generate_pdf_endpoint(req: GeneratePDFRequest):
             media_type="application/pdf",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/resume/parse-pdf")
+async def parse_pdf_endpoint(
+    file: UploadFile = File(...),
+    api_key: str = Depends(resolve_api_key),
+):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum size is 10 MB.")
+
+    text = extract_text_from_pdf(contents)
+    if not text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="No text could be extracted. This PDF may be a scanned image — try a text-based PDF.",
+        )
+
+    try:
+        parsed = parse_resume_from_text(text, api_key)
+        validate_resume(parsed, BASE_DIR / "resume_schema.json")
+        return parsed
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

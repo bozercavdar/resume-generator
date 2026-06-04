@@ -59,6 +59,67 @@ Return the adjusted resume JSON only.
         raise ValueError(f"Gemini did not return valid JSON:\n{text}") from e
 
 
+def parse_resume_from_text(text: str, api_key: str) -> dict:
+    client = genai.Client(api_key=api_key)
+
+    instructions = f"""You are a resume parser. Extract all information from the resume text below and return it as JSON.
+
+RULES:
+- Return ONLY valid JSON — no markdown, no code fences.
+- Use empty string "" for missing text fields.
+- Use empty array [] for missing array fields.
+- Do NOT invent information not present in the text.
+- Extract ALL work experiences, education entries, and skills.
+- Format dates as MM/YYYY when possible; use "Present" for current positions.
+- Split experience descriptions into individual bullet point strings.
+
+OUTPUT STRUCTURE (follow exactly):
+{{
+  "name": "",
+  "location": "",
+  "phone": "",
+  "email": "",
+  "links": [{{"label": "", "url": ""}}],
+  "summary": "",
+  "experience": [{{
+    "title": "", "company": "", "location": "",
+    "start": "", "end": "", "bullets": []
+  }}],
+  "education": [{{
+    "degree": "", "school": "", "location": "",
+    "start": "", "end": "", "details": ""
+  }}],
+  "volunteering": [{{
+    "role": "", "organization": "", "location": "",
+    "start": "", "end": "", "bullets": []
+  }}],
+  "skills": {{
+    "technical": [],
+    "languages": []
+  }}
+}}
+
+RESUME TEXT:
+{text}
+
+Return the JSON only.
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=instructions,
+        config={"temperature": 0.1},
+    )
+
+    raw = response.text.strip()
+    raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Gemini did not return valid JSON:\n{raw}") from e
+
+
 def generate_cover_letter_text(
     resume_data: dict,
     job_description: str,

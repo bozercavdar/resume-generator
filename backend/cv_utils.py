@@ -1,5 +1,6 @@
 from pathlib import Path
 from io import BytesIO
+import pdfplumber
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 from docx import Document
@@ -7,6 +8,12 @@ from docx.shared import Pt
 
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
+        pages = [page.extract_text() or "" for page in pdf.pages]
+    return "\n".join(pages).strip()
 
 
 def render_html(resume_data: dict, template_name: str) -> str:

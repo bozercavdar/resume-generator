@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { importResumeFromPdf } from '../api'
 
 const INPUT = 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 const LABEL = 'block text-sm font-medium text-gray-700 mb-1'
@@ -55,6 +56,13 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
   const [langInput, setLangInput] = useState('')
   const [importStatus, setImportStatus] = useState(null) // null | { ok: true, name } | { ok: false, msg }
   const fileInputRef = useRef()
+
+  // PDF import state
+  const [pdfStatus, setPdfStatus] = useState(null) // null | 'loading' | { ok: true } | { ok: false, msg }
+  const [showPdfKeySection, setShowPdfKeySection] = useState(false)
+  const [pdfKeyInput, setPdfKeyInput] = useState('')
+  const [showPdfKeyValue, setShowPdfKeyValue] = useState(false)
+  const pdfFileRef = useRef()
 
   // --- generic setters ---
   const set = (key, val) => setData(d => ({ ...d, [key]: val }))
@@ -134,6 +142,41 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
     e.target.value = ''
   }, [])
 
+  // --- PDF import ---
+  function handlePdfButtonClick() {
+    const stored = sessionStorage.getItem('gemini_api_key')
+    if (stored) {
+      pdfFileRef.current?.click()
+    } else {
+      setShowPdfKeySection(true)
+    }
+  }
+
+  function handlePdfKeySubmit() {
+    const trimmed = pdfKeyInput.trim()
+    if (!trimmed.startsWith('AIza')) {
+      setPdfStatus({ ok: false, msg: 'Invalid key — should start with "AIza".' })
+      return
+    }
+    sessionStorage.setItem('gemini_api_key', trimmed)
+    setShowPdfKeySection(false)
+    pdfFileRef.current?.click()
+  }
+
+  const handlePdfFileChange = useCallback(async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setPdfStatus('loading')
+    try {
+      const parsed = await importResumeFromPdf(file)
+      setData(parsed)
+      setPdfStatus({ ok: true })
+    } catch (err) {
+      setPdfStatus({ ok: false, msg: err.message })
+    }
+  }, [])
+
   function handleSubmit(e) {
     e.preventDefault()
     onSubmit(data)
@@ -141,35 +184,93 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* JSON Import */}
+      {/* Import */}
       <div className={CARD}>
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <p className="text-sm font-medium text-gray-700">Import from JSON</p>
-            <p className="text-xs text-gray-400 mt-0.5">Load a previously exported resume file to skip re-entering everything</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {importStatus && (
-              importStatus.ok
-                ? <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">✓ {importStatus.name}</span>
-                : <span className="text-xs text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">✕ {importStatus.msg}</span>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={handleFileImport}
-            />
+        <p className="text-sm font-semibold text-gray-800 mb-3">Import Resume</p>
+
+        <div className="flex flex-wrap gap-3 items-start">
+          {/* JSON import */}
+          <div className="flex items-center gap-2">
+            <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFileImport} />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-1.5"
             >
-              📂 Choose file
+              📂 Import JSON
             </button>
+            {importStatus && (
+              importStatus.ok
+                ? <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">✓ {importStatus.name}</span>
+                : <span className="text-xs text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">✕ {importStatus.msg}</span>
+            )}
+          </div>
+
+          {/* PDF import */}
+          <div className="flex items-center gap-2">
+            <input ref={pdfFileRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={handlePdfFileChange} />
+            <button
+              type="button"
+              onClick={handlePdfButtonClick}
+              disabled={pdfStatus === 'loading'}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {pdfStatus === 'loading'
+                ? <><PdfSpinner /> Extracting…</>
+                : '📄 Import from PDF'}
+            </button>
+            {pdfStatus && pdfStatus !== 'loading' && (
+              pdfStatus.ok
+                ? <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">✓ Imported</span>
+                : <span className="text-xs text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">✕ {pdfStatus.msg}</span>
+            )}
           </div>
         </div>
+
+        {/* Inline API key prompt */}
+        {showPdfKeySection && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-amber-800 mb-1">Gemini API key required for PDF import</p>
+            <p className="text-xs text-amber-600 mb-3">
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-800">
+                Get one free at Google AI Studio ↗
+              </a>
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showPdfKeyValue ? 'text' : 'password'}
+                  className="w-full border border-amber-300 rounded-md px-3 py-2 pr-14 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  placeholder="AIza..."
+                  value={pdfKeyInput}
+                  onChange={e => setPdfKeyInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handlePdfKeySubmit()}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button type="button" onClick={() => setShowPdfKeyValue(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 px-1">
+                  {showPdfKeyValue ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <button type="button" onClick={handlePdfKeySubmit} className="px-4 py-2 bg-amber-500 text-white rounded-md text-sm font-medium hover:bg-amber-600">
+                Continue
+              </button>
+              <button type="button" onClick={() => setShowPdfKeySection(false)} className="px-3 py-2 text-sm text-gray-500 border border-gray-300 rounded-md hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Review reminder after PDF import */}
+        {pdfStatus?.ok && (
+          <div className="mt-3 flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5">
+            <span className="text-yellow-500 mt-0.5">⚠</span>
+            <p className="text-xs text-yellow-800">
+              <strong>Review carefully.</strong> AI extraction may miss details or mis-classify sections. Check every field before proceeding.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Personal Info */}
@@ -444,5 +545,14 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
         </div>
       </div>
     </form>
+  )
+}
+
+function PdfSpinner() {
+  return (
+    <svg className="animate-spin h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+    </svg>
   )
 }
