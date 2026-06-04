@@ -123,6 +123,7 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
   const handleFileImport = useCallback((e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setPdfStatus(null)
     const reader = new FileReader()
     reader.onload = (ev) => {
       try {
@@ -167,6 +168,7 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
+    setImportStatus(null)
     setPdfStatus('loading')
     try {
       const parsed = await importResumeFromPdf(file)
@@ -264,8 +266,8 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
 
         {/* Review reminder after PDF import */}
         {pdfStatus?.ok && (
-          <div className="mt-3 flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5">
-            <span className="text-yellow-500 mt-0.5">⚠</span>
+          <div className="mt-3 flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5">
+            <span className="text-yellow-500">⚠</span>
             <p className="text-xs text-yellow-800">
               <strong>Review carefully.</strong> AI extraction may miss details or mis-classify sections. Check every field before proceeding.
             </p>
