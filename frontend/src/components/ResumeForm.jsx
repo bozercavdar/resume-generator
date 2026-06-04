@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 const INPUT = 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 const LABEL = 'block text-sm font-medium text-gray-700 mb-1'
@@ -28,6 +28,22 @@ function SectionHeader({ title, onAdd, addLabel }) {
   )
 }
 
+function validateResumeJson(obj) {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj))
+    return 'File must contain a JSON object, not an array or primitive.'
+  for (const key of ['name', 'experience', 'education', 'skills']) {
+    if (!(key in obj)) return `Missing required field: "${key}".`
+  }
+  if (typeof obj.name !== 'string') return '"name" must be a string.'
+  if (!Array.isArray(obj.experience)) return '"experience" must be an array.'
+  if (!Array.isArray(obj.education)) return '"education" must be an array.'
+  if (typeof obj.skills !== 'object' || Array.isArray(obj.skills))
+    return '"skills" must be an object.'
+  if (!Array.isArray(obj.skills.technical)) return '"skills.technical" must be an array.'
+  if (!Array.isArray(obj.skills.languages)) return '"skills.languages" must be an array.'
+  return null
+}
+
 const emptyExp = () => ({ title: '', company: '', location: '', start: '', end: '', bullets: [''] })
 const emptyEdu = () => ({ degree: '', school: '', location: '', start: '', end: '', details: '' })
 const emptyVol = () => ({ role: '', organization: '', location: '', start: '', end: '', bullets: [''] })
@@ -37,7 +53,8 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
   const [data, setData] = useState(initialData)
   const [skillInput, setSkillInput] = useState('')
   const [langInput, setLangInput] = useState('')
-  const jsonRef = useRef()
+  const [importStatus, setImportStatus] = useState(null) // null | { ok: true, name } | { ok: false, msg }
+  const fileInputRef = useRef()
 
   // --- generic setters ---
   const set = (key, val) => setData(d => ({ ...d, [key]: val }))
@@ -94,15 +111,28 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
     setSkills(key, data.skills[key].filter((_, idx) => idx !== i))
   }
 
-  // --- JSON import ---
-  function handleJsonImport(e) {
-    try {
-      const parsed = JSON.parse(e.target.value)
-      setData(parsed)
-    } catch {
-      // silently ignore invalid JSON while typing
+  // --- JSON file import ---
+  const handleFileImport = useCallback((e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result)
+        const validationError = validateResumeJson(parsed)
+        if (validationError) {
+          setImportStatus({ ok: false, msg: validationError })
+        } else {
+          setData(parsed)
+          setImportStatus({ ok: true, name: file.name })
+        }
+      } catch {
+        setImportStatus({ ok: false, msg: 'File is not valid JSON.' })
+      }
     }
-  }
+    reader.readAsText(file)
+    e.target.value = ''
+  }, [])
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -113,18 +143,33 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
     <form onSubmit={handleSubmit}>
       {/* JSON Import */}
       <div className={CARD}>
-        <details>
-          <summary className="cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-900">
-            Import from JSON (optional — paste existing resume data)
-          </summary>
-          <textarea
-            ref={jsonRef}
-            rows={6}
-            placeholder='{ "name": "...", "experience": [...] }'
-            className={`${INPUT} mt-3 font-mono text-xs`}
-            onChange={handleJsonImport}
-          />
-        </details>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-sm font-medium text-gray-700">Import from JSON</p>
+            <p className="text-xs text-gray-400 mt-0.5">Load a previously exported resume file to skip re-entering everything</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {importStatus && (
+              importStatus.ok
+                ? <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">✓ {importStatus.name}</span>
+                : <span className="text-xs text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">✕ {importStatus.msg}</span>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleFileImport}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-1.5"
+            >
+              📂 Choose file
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Personal Info */}
