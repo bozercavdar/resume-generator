@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { importResumeFromPdf } from '../api'
+import HelpModal, { Section, HelpItem } from './HelpModal'
 
 const INPUT = 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 const LABEL = 'block text-sm font-medium text-gray-700 mb-1'
@@ -58,6 +59,8 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
   const fileInputRef = useRef()
 
   // PDF import state
+  const [helpOpen, setHelpOpen] = useState(false)
+
   const [pdfStatus, setPdfStatus] = useState(null) // null | 'loading' | { ok: true } | { ok: false, msg }
   const [showPdfKeySection, setShowPdfKeySection] = useState(false)
   const [pdfKeyInput, setPdfKeyInput] = useState('')
@@ -186,6 +189,23 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
 
   return (
     <form onSubmit={handleSubmit}>
+      {helpOpen && <ResumeFormHelp onClose={() => setHelpOpen(false)} />}
+
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Build Your Resume</h2>
+          <p className="text-sm text-gray-500">Fill in your information or import an existing resume</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHelpOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+        >
+          <span className="text-base leading-none">❓</span> How to use
+        </button>
+      </div>
+
       {/* Import */}
       <div className={CARD}>
         <p className="text-sm font-semibold text-gray-800 mb-3">Import Resume</p>
@@ -547,6 +567,56 @@ export default function ResumeForm({ initialData, onSubmit, onSkipToPreview, sub
         </div>
       </div>
     </form>
+  )
+}
+
+function ResumeFormHelp({ onClose }) {
+  return (
+    <HelpModal title="How to use — Step 1: Build Resume" onClose={onClose}>
+      <Section icon="🗺️" title="Overview">
+        <p>Build or import your resume data. When you're done you have two paths:</p>
+        <ul className="mt-2 space-y-1 list-disc list-inside text-gray-600">
+          <li><strong>Next: Tailor with AI</strong> — paste a job description in Step 2 and the AI rewrites your bullets to match the role.</li>
+          <li><strong>Skip to Preview</strong> — jump straight to the PDF preview without any AI step.</li>
+        </ul>
+      </Section>
+
+      <Section icon="📥" title="Import Resume">
+        <HelpItem label="📂 Import JSON">
+          If you've used this app before, upload the <code>.json</code> file you exported earlier. The entire form fills in instantly — no re-typing needed.
+        </HelpItem>
+        <HelpItem label="📄 Import from PDF">
+          Upload an existing PDF resume from any template. The AI reads it and extracts your information into the form fields. Requires a Gemini API key (free). Always review the result — extraction may miss details in heavily formatted layouts.
+        </HelpItem>
+      </Section>
+
+      <Section icon="✏️" title="Filling in the form">
+        <HelpItem label="Personal Information">
+          Name, email, phone, and location. Name is the only required field.
+        </HelpItem>
+        <HelpItem label="Links">
+          Add LinkedIn, GitHub, portfolio, or any other URL. Click <em>+ Add Link</em>, then enter a label and a URL.
+        </HelpItem>
+        <HelpItem label="Professional Summary">
+          A short paragraph about yourself. The AI can rewrite this for you in Step 2 — leave it blank or write a draft.
+        </HelpItem>
+        <HelpItem label="Work Experience">
+          One entry per role. Each entry has a title, company, dates, and bullet points. Click <em>+ Add bullet</em> to add more achievements.
+        </HelpItem>
+        <HelpItem label="Education &amp; Volunteering">
+          Same pattern as experience. Volunteering is optional — leave the section empty and it will be hidden in the PDF.
+        </HelpItem>
+        <HelpItem label="Skills">
+          Type a skill and press <kbd className="bg-gray-100 border border-gray-300 rounded px-1 py-0.5 text-xs">Enter</kbd> (or click <em>Add</em>) to add a tag. Click <strong>✕</strong> on a tag to remove it. Use a format like <em>"English – Professional"</em> for languages.
+        </HelpItem>
+      </Section>
+
+      <Section icon="💾" title="Saving your data">
+        <HelpItem label="⬇ Export JSON">
+          Downloads your form data as a <code>.json</code> file. Import it next time to skip re-filling the form. Export before navigating away — the browser does not save your data automatically.
+        </HelpItem>
+      </Section>
+    </HelpModal>
   )
 }
 

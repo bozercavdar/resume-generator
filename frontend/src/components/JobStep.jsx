@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { adjustResume } from '../api'
+import HelpModal, { Section, HelpItem } from './HelpModal'
 
 export default function JobStep({ resumeData, initialJobDescription, onBack, onAdjusted }) {
   const [jobDescription, setJobDescription] = useState(initialJobDescription)
   const [role, setRole] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const stored = sessionStorage.getItem('gemini_api_key') || ''
   const [apiKey, setApiKey] = useState(stored)
@@ -42,11 +44,25 @@ export default function JobStep({ resumeData, initialJobDescription, onBack, onA
 
   return (
     <div>
+      {helpOpen && <JobStepHelp onClose={() => setHelpOpen(false)} />}
+
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Tailor Your Resume</h2>
-        <p className="text-sm text-gray-500 mb-5">
-          Paste the job description below. The AI will rewrite your bullet points and summary to match — without inventing anything.
-        </p>
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Tailor Your Resume</h2>
+            <p className="text-sm text-gray-500">
+              Paste the job description below. The AI will rewrite your bullet points and summary to match — without inventing anything.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+          >
+            <span className="text-base leading-none">❓</span> How to use
+          </button>
+        </div>
 
         {/* API Key section */}
         <div className="mb-5">
@@ -168,5 +184,68 @@ export default function JobStep({ resumeData, initialJobDescription, onBack, onA
         </button>
       </div>
     </div>
+  )
+}
+
+function JobStepHelp({ onClose }) {
+  return (
+    <HelpModal title="How to use — Step 2: Tailor with AI" onClose={onClose}>
+      <Section icon="🗺️" title="What happens here">
+        <p>
+          The AI reads your resume and the job description, then rewrites your bullet points and
+          professional summary to highlight the most relevant experience — without changing facts,
+          dates, or company names.
+        </p>
+      </Section>
+
+      <Section icon="🔑" title="Gemini API Key">
+        <HelpItem label="Why is it needed?">
+          This app uses Google Gemini to do the tailoring. You provide your own key so your data goes
+          directly to Google — it is never stored by this app.
+        </HelpItem>
+        <HelpItem label="Where do I get one?">
+          Go to{' '}
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+            Google AI Studio
+          </a>{' '}
+          and create a free API key. It takes under a minute.
+        </HelpItem>
+        <HelpItem label="Is it safe?">
+          Your key is saved only in this browser session (<code>sessionStorage</code>) and is erased
+          automatically when you close the tab. It is never sent to or stored by this app's backend.
+        </HelpItem>
+      </Section>
+
+      <Section icon="🎯" title="Target Role (optional)">
+        <p className="text-gray-600 leading-relaxed">
+          If the job description doesn't clearly state the role title, entering it here (e.g.{' '}
+          <em>"Data Scientist"</em>) helps the AI focus the tone and vocabulary of the rewrite.
+          Leave it blank if the role is obvious from the description.
+        </p>
+      </Section>
+
+      <Section icon="📋" title="Job Description">
+        <p className="text-gray-600 leading-relaxed">
+          Paste the full job posting — include the responsibilities, requirements, and any "About
+          the company" section. More context gives the AI better signal for which of your
+          experiences to emphasise.
+        </p>
+      </Section>
+
+      <Section icon="✨" title="Tailor Resume button">
+        <HelpItem label="What the AI will do">
+          Reorder and rewrite bullet points to match the job's language, emphasise relevant skills,
+          and rewrite the professional summary.
+        </HelpItem>
+        <HelpItem label="What the AI will NOT do">
+          Invent experience, change job titles, alter dates, add companies, or create new fields.
+          The structure and facts of your resume are always preserved.
+        </HelpItem>
+        <HelpItem label="Takes too long?">
+          Gemini usually responds in 10–30 seconds. If it takes longer, the free-tier server may
+          be waking up — wait up to 1 minute before retrying.
+        </HelpItem>
+      </Section>
+    </HelpModal>
   )
 }

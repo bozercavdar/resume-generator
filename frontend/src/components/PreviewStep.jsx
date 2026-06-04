@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import ResumePreview from './ResumePreview'
 import ResumeForm from './ResumeForm'
+import HelpModal, { Section, HelpItem } from './HelpModal'
 import { downloadPdf, generateCoverLetter, downloadCoverLetterDocx } from '../api'
 
 // A4 at 96 dpi
@@ -34,6 +35,7 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
     }
   }, [showCoverLetter]);
 
+  const [helpOpen, setHelpOpen] = useState(false)
   const [loadingPdf, setLoadingPdf] = useState(false)
   const [loadingCl, setLoadingCl] = useState(false)
   const [loadingClDownload, setLoadingClDownload] = useState(false)
@@ -85,6 +87,8 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
 
   return (
     <div>
+      {helpOpen && <PreviewStepHelp onClose={() => setHelpOpen(false)} />}
+
       {/* Action bar */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -102,6 +106,13 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
               ${editMode ? 'bg-gray-100 border-gray-400 text-gray-700' : 'border-gray-300 text-gray-600 hover:text-gray-900'}`}
           >
             {editMode ? 'Cancel Edit' : '✏️ Edit Resume'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+          >
+            <span className="text-base leading-none">❓</span> How to use
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -235,6 +246,65 @@ export default function PreviewStep({ adjustedData, originalData, jobDescription
         </div>
       )}
     </div>
+  )
+}
+
+function PreviewStepHelp({ onClose }) {
+  return (
+    <HelpModal title="How to use — Step 3: Preview &amp; Export" onClose={onClose}>
+      <Section icon="🗺️" title="Overview">
+        <p className="text-gray-600 leading-relaxed">
+          This is the final step. Review your resume, make any manual tweaks, then download
+          your PDF and optional cover letter.
+        </p>
+      </Section>
+
+      <Section icon="📄" title="Resume Preview">
+        <HelpItem label="A4 page view">
+          The preview shows exactly how the PDF will look, rendered at true A4 size (794 × 1093 px).
+          Scroll inside the preview area to see the full page.
+        </HelpItem>
+        <HelpItem label="Page boundary line">
+          A dashed line marks where page 1 ends. Content below this line will appear on page 2
+          in the downloaded PDF.
+        </HelpItem>
+        <HelpItem label="⚠ Exceeds 1 page warning">
+          If the red badge appears, your content overflows to a second page. To fix it: shorten
+          bullet points, remove less relevant experience, or reduce the number of skills.
+        </HelpItem>
+      </Section>
+
+      <Section icon="✏️" title="Edit Resume">
+        <p className="text-gray-600 leading-relaxed">
+          Click <strong>✏️ Edit Resume</strong> to open the full form pre-filled with the current
+          resume data. Make your changes, then click <strong>Save Changes</strong> to update the
+          preview. Click <strong>Cancel Edit</strong> to discard changes and return to the preview.
+        </p>
+      </Section>
+
+      <Section icon="⬇️" title="Download PDF">
+        <p className="text-gray-600 leading-relaxed">
+          Downloads an ATS-friendly PDF using the same A4 template shown in the preview. The file
+          is named after the name field in your resume. No API key is needed for this step.
+        </p>
+      </Section>
+
+      <Section icon="📝" title="Cover Letter">
+        <HelpItem label="Generating">
+          Click <strong>📝 Cover Letter</strong> to generate a professional cover letter based on
+          your resume and the job description from Step 2. This requires a Gemini API key and is
+          only available if you went through the AI tailoring step.
+        </HelpItem>
+        <HelpItem label="Editing">
+          The generated text appears in an editable text area below the resume preview. You can
+          adjust the wording before downloading.
+        </HelpItem>
+        <HelpItem label="Downloading">
+          Click <strong>⬇️ Download .docx</strong> in the cover letter panel to save it as a
+          Word document, ready to attach to a job application.
+        </HelpItem>
+      </Section>
+    </HelpModal>
   )
 }
 
